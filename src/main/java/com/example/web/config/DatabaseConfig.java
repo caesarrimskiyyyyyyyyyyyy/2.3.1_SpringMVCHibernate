@@ -1,77 +1,76 @@
 package com.example.web.config;
 
-import org.apache.commons.dbcp2.BasicDataSource;
+import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 
 @Configuration
-@EnableJpaRepositories("com.example.web")
+@EnableJpaRepositories(basePackages = "com.example.web")
 @EnableTransactionManagement
 @PropertySource("classpath:db.properties")
-@ComponentScan("com.example.web")
 public class DatabaseConfig {
-    @Resource
-    private Environment env;
+    @Value("${db.driver}")
+    private String driverClassName;
+
+    @Value("${db.url}")
+    private String dbUrl;
+
+    @Value("${db.username}")
+    private String dbUsername;
+
+    @Value("${db.password}")
+    private String dbPassword;
+
+    @Value("${hibernate.dialect}")
+    private String hibernateDialect;
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(actualDataSource());
+        em.setDataSource(dataSource());
         em.setPackagesToScan("com.example.web.model");
 
-        JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
-        em.setJpaProperties(getHibernateProperties());
+        em.setJpaProperties(hibernateProperties());
+
         return em;
     }
 
     @Bean
-    public DataSource actualDataSource() {
-        BasicDataSource dataSource = new BasicDataSource();
-        dataSource.setDriverClassName(env.getRequiredProperty("db.driver"));
-        dataSource.setUrl(env.getRequiredProperty("db.url"));
-        dataSource.setUsername(env.getRequiredProperty("db.username"));
-        dataSource.setPassword(env.getRequiredProperty("db.password"));
-
-        dataSource.setInitialSize(Integer.parseInt(env.getRequiredProperty("db.initialSize")));
-        dataSource.setMinIdle(Integer.parseInt(env.getRequiredProperty("db.minIdle")));
-        dataSource.setMaxIdle(Integer.parseInt(env.getRequiredProperty("db.maxIdle")));
-        dataSource.setTestOnBorrow(Boolean.parseBoolean(env.getRequiredProperty("db.testOnBorrow")));
-        dataSource.setValidationQuery(env.getRequiredProperty("db.validationQuery"));
+    public DataSource dataSource() {
+        HikariDataSource dataSource = new HikariDataSource();
+        dataSource.setDriverClassName(driverClassName);
+        dataSource.setJdbcUrl(dbUrl);
+        dataSource.setUsername(dbUsername);
+        dataSource.setPassword(dbPassword);
+        dataSource.setMaximumPoolSize(10);
         return dataSource;
     }
 
     @Bean
-    public PlatformTransactionManager transactionManager() {
+    public JpaTransactionManager transactionManager() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
         return transactionManager;
     }
 
-    public Properties getHibernateProperties() {
-        try {
-            Properties properties = new Properties();
-            InputStream is = getClass().getClassLoader().getResourceAsStream("hibernate.properties");
-            properties.load(is);
-            return properties;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private Properties hibernateProperties() {
+        Properties properties = new Properties();
+        properties.setProperty("hibernate.dialect", hibernateDialect);
+        properties.setProperty("hibernate.show_sql", "true");
+        properties.setProperty("hibernate.format_sql", "true");
+        properties.setProperty("hibernate.hbm2ddl.auto", "update");
+        return properties;
     }
 }
