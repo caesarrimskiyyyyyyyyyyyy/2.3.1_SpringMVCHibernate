@@ -11,6 +11,7 @@
         <th></th>
         <th>f.name</th>
         <th>l.name</th>
+        <th>email</th>
         <th></th>
         <th></th>
     </tr>
@@ -18,12 +19,14 @@
     <tbody>
     <tr th:each="user : ${users}">
         <td th:utext="${user.getId()}"></td>
-        <td th:utext="${user.getName()}"></td>
+        <td th:utext="${user.getFirstName()}"></td>
         <td th:utext="${user.getLastName()}"></td>
+        <td th:utext="${user.getEmail()}"></td>
         <td><input type="submit" value="update"></td>
         <td><input type="submit" value="delete"></td>
     </tr>
     </tbody>
 </table>
+<input type="submit" value="add">
 </body>
 </html>
