@@ -5,7 +5,8 @@
     <title>New user</title>
 </head>
 <body>
-<form th:method="POST" th:action="@{/}" th:object="${user}">
+<h1>Create</h1>
+<form th:method="POST" th:action="@{/new}" th:object="${user}">
     <fieldset>
         <legend>Contact information:</legend>
         <label for="firstName">1: </label>
