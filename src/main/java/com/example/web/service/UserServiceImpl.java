@@ -26,7 +26,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(Long id) {
-        return userDao.getUserById(id);
+        return Optional.ofNullable(userDao.getUserById(id))
+                .orElseThrow(() -> new EntityNotFoundException("User with id: " + id + " not found"));
     }
 
     @Override
@@ -40,7 +41,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         Optional<User> userOptional = Optional.ofNullable(getUserById(id));
         userOptional.ifPresentOrElse(user -> userDao.deleteUser(id), () -> {
-            throw new EntityNotFoundException("User with id: " + id + " not found");
+            throw new EntityNotFoundException("Failed to delete the user with id: " + id);
         });
     }
 
