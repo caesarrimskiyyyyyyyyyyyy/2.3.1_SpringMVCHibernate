@@ -4,8 +4,11 @@ import com.example.web.dao.UserDao;
 import com.example.web.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -27,16 +30,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void saveUser(User user) {
         userDao.saveUser(user);
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
-        userDao.deleteUser(id);
+        Optional<User> userOptional = Optional.ofNullable(getUserById(id));
+        userOptional.ifPresentOrElse(user -> userDao.deleteUser(id), () -> {
+            throw new EntityNotFoundException("User with id: " + id + " not found");
+        });
     }
 
     @Override
+    @Transactional
     public void updateUser(User user) {
         userDao.updateUser(user);
     }
